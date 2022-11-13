@@ -33,6 +33,7 @@ class MainViewModel : ViewModel() {
     }
 
     private fun updateTicker() {
+        if (start) resetParameters()
         flow<Int> {
             while (start) {
                 delay(1000)
@@ -41,6 +42,18 @@ class MainViewModel : ViewModel() {
                 timeFlow.emit("$min:$formattedSeconds")
             }
         }.launchIn(viewModelScope)
+    }
+
+    private fun resetParameters() {
+        min = 0
+        seconds = 0
+        delay = 3000.0
+        rounds = 0
+        points = 0
+
+        viewModelScope.launch {
+            timeFlow.emit("0:00")
+        }
     }
 
     private fun getFormattedSeconds(): String {
@@ -66,10 +79,10 @@ class MainViewModel : ViewModel() {
     private fun startHighlighting() {
         flow<Int> {
             while (start) {
-                delay(delay.milliseconds)
                 updateRounds()
-                updateDelay()
                 updateHighlight()
+                delay(delay.milliseconds)
+                updateDelay()
             }
         }.launchIn(viewModelScope)
     }
