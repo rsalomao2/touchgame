@@ -21,7 +21,7 @@ import com.salosoft.touchgame.ui.widget.GridSizeOption
 import com.salosoft.touchgame.ui.widget.SettingsDialogView
 
 @Composable
-fun ToolbarWidget(title: String, onGridSizeSelected: (GridSizeOption) -> Unit) {
+fun ToolbarWidget(title: String, lastSelectedItem: GridSizeOption, onGridSizeSelected: (GridSizeOption) -> Unit) {
     var isMenuExpanded by remember { mutableStateOf(false) }
     var onActionItemClicked by remember { mutableStateOf<ActionItemClicked>(ActionItemClicked.None) }
 
@@ -35,7 +35,10 @@ fun ToolbarWidget(title: String, onGridSizeSelected: (GridSizeOption) -> Unit) {
 
             DropdownMenu(
                 expanded = isMenuExpanded,
-                onDismissRequest = { isMenuExpanded = false }
+                onDismissRequest = {
+                    onActionItemClicked = ActionItemClicked.None
+                    isMenuExpanded = false
+                }
             ) {
 
                 DropdownMenuItem(onClick = {
@@ -49,6 +52,7 @@ fun ToolbarWidget(title: String, onGridSizeSelected: (GridSizeOption) -> Unit) {
 
     when (onActionItemClicked) {
         is ActionItemClicked.Settings -> SettingsDialogView(
+            lastSelectedItem = lastSelectedItem,
             onDismiss = {
                 onActionItemClicked = ActionItemClicked.None
             },
@@ -70,6 +74,6 @@ sealed class ActionItemClicked {
 @Composable
 private fun Preview() {
     MaterialTheme {
-        ToolbarWidget("Title"){}
+        ToolbarWidget("Title", GridSizeOption.FourByFour) {}
     }
 }

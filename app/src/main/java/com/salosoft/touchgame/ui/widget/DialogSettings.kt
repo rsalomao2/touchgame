@@ -20,8 +20,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SettingsDialogView(onDismiss: () -> Unit, onSelected: (GridSizeOption) -> Unit) {
+fun SettingsDialogView(
+    lastSelectedItem: GridSizeOption,
+    onDismiss: () -> Unit,
+    onSelected: (GridSizeOption) -> Unit
+) {
     var openDialog by remember { mutableStateOf(true) }
+    var selectedItem by remember { mutableStateOf(lastSelectedItem) }
 
     if (openDialog) {
         AlertDialog(
@@ -34,20 +39,40 @@ fun SettingsDialogView(onDismiss: () -> Unit, onSelected: (GridSizeOption) -> Un
             text = {
                 val modifier = Modifier.padding(bottom = 12.dp)
                 Column {
-                    SelectableItem(selected = false, title = "4x4", modifier = modifier) {
+                    SelectableItem(
+                        selected = selectedItem == GridSizeOption.FourByFour,
+                        title = "4x4",
+                        modifier = modifier
+                    ) {
                         openDialog = false
+                        selectedItem = GridSizeOption.FourByFour
                         onSelected(GridSizeOption.FourByFour)
                     }
-                    SelectableItem(selected = false, title = "16x16", modifier = modifier) {
+                    SelectableItem(
+                        selected = selectedItem == GridSizeOption.SixteenBySixteen,
+                        title = "16x16",
+                        modifier = modifier
+                    ) {
                         openDialog = false
+                        selectedItem = GridSizeOption.SixteenBySixteen
                         onSelected(GridSizeOption.SixteenBySixteen)
                     }
-                    SelectableItem(selected = false, title = "36x36", modifier = modifier) {
+                    SelectableItem(
+                        selected = selectedItem == GridSizeOption.ThirdSixByThirdSix,
+                        title = "36x36",
+                        modifier = modifier
+                    ) {
                         openDialog = false
+                        selectedItem = GridSizeOption.ThirdSixByThirdSix
                         onSelected(GridSizeOption.ThirdSixByThirdSix)
                     }
-                    SelectableItem(selected = false, title = "64x64", modifier = modifier) {
+                    SelectableItem(
+                        selected = selectedItem == GridSizeOption.SixtyFourBySixtyFour,
+                        title = "64x64",
+                        modifier = modifier
+                    ) {
                         openDialog = false
+                        selectedItem = GridSizeOption.SixtyFourBySixtyFour
                         onSelected(GridSizeOption.SixtyFourBySixtyFour)
                     }
                 }
@@ -83,6 +108,7 @@ sealed class GridSizeOption {
 @Preview(showBackground = true)
 private fun Preview() {
     SettingsDialogView(
+        GridSizeOption.FourByFour,
         onDismiss = {},
         onSelected = {}
     )

@@ -23,9 +23,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -52,19 +49,20 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun App() {
     val viewModel: MainViewModel = viewModel()
-    var gridSize by remember { mutableStateOf(4) }
+    val gridSize by viewModel.gridSizeFlow.collectAsState(initial = 4)
+    val lastSelectedItem: GridSizeOption by viewModel.lastSelectedItem.collectAsState(initial = GridSizeOption.FourByFour)
     TouchGameTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                ToolbarWidget(title = "Touch Game") { gridSizeSelected ->
+                ToolbarWidget(title = "Touch Game", lastSelectedItem) { gridSizeSelected ->
                     val size = when (gridSizeSelected) {
                         is GridSizeOption.FourByFour -> 4
                         is GridSizeOption.SixteenBySixteen -> 16
                         is GridSizeOption.ThirdSixByThirdSix -> 36
                         is GridSizeOption.SixtyFourBySixtyFour -> 64
                     }
-                    gridSize = size
+                    viewModel.updateGridSize(size)
                 }
             }
         ) {
@@ -96,7 +94,7 @@ private fun App() {
                         .fillMaxWidth()
                         .padding(14.dp)
                 ) {
-                    val buttonText = if (viewModel.start) "Stop" else "Start"
+                    val buttonText = if (viewModel.hasStated) "Stop" else "Start"
                     Text(
                         text = buttonText, color = Color.White, modifier = Modifier.padding(8.dp),
                         fontSize = 18.sp

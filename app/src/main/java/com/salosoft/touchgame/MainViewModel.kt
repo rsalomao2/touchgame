@@ -2,6 +2,7 @@ package com.salosoft.touchgame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.salosoft.touchgame.ui.widget.GridSizeOption
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -17,15 +19,25 @@ class MainViewModel : ViewModel() {
     private var delay = 3000.0
     private var rounds = 0
 
-    var start = false
+    var hasStated = false
     var points = 0
 
     var timeFlow = MutableStateFlow("0:00")
     val positionFlow = MutableStateFlow(-1)
+    val gridSizeFlow = MutableStateFlow(4)
+    val lastSelectedItem = gridSizeFlow.map { size ->
+        when (size) {
+            4 -> GridSizeOption.FourByFour
+            16 -> GridSizeOption.SixteenBySixteen
+            36 -> GridSizeOption.ThirdSixByThirdSix
+            64 -> GridSizeOption.SixtyFourBySixtyFour
+            else -> GridSizeOption.SixtyFourBySixtyFour
+        }
+    }
     val errorMessageFlow = MutableStateFlow("")
 
     fun startStopHighlighting() {
-        start = !start
+        hasStated = !hasStated
         viewModelScope.launch {
             updateTicker()
             startHighlighting()
@@ -33,15 +45,23 @@ class MainViewModel : ViewModel() {
     }
 
     fun onItemClicked(isHighlight: Boolean) {
-        if (isHighlight) points++ else if (points > 0) points--
-        if (points <= 0)
-            gameOver()
+        if (hasStated) {
+            if (isHighlight) points++ else if (points > 0) points--
+            if (points <= 0)
+                gameOver()
+        }
+    }
+
+    fun updateGridSize(size: Int) {
+        viewModelScope.launch {
+            gridSizeFlow.emit(size)
+        }
     }
 
     private fun updateTicker() {
-        if (start) resetParameters()
+        if (hasStated) resetParameters()
         flow<Int> {
-            while (start) {
+            while (hasStated) {
                 delay(1000)
                 updateSeconds()
                 val formattedSeconds = getFormattedSeconds()
@@ -82,7 +102,7 @@ class MainViewModel : ViewModel() {
 
     private fun startHighlighting() {
         flow<Int> {
-            while (start) {
+            while (hasStated) {
                 updateRounds()
                 updateHighlight()
                 delay(delay.milliseconds)
@@ -102,7 +122,8 @@ class MainViewModel : ViewModel() {
     }
 
     private suspend fun updateHighlight() {
-        val position = Random.nextInt(0, 15)
+        val randomLimit = gridSizeFlow.first() - 1
+        val position = Random.nextInt(0, randomLimit)
         val currentPosition = positionFlow.first()
         if (position == currentPosition) updateHighlight()
         positionFlow.emit(position)
