@@ -15,22 +15,28 @@ class MainViewModel : ViewModel() {
 
     var start = false
     var points = 0
-    var time = "0:00"
 
+    var timeFlow = MutableStateFlow("0:00")
     val positionFlow = MutableStateFlow(-1)
-    val errorMessage = MutableStateFlow("")
+    val errorMessageFlow = MutableStateFlow("")
 
     fun startStopHighlighting() {
         start = !start
         viewModelScope.launch {
+            updateTicker()
             startHighlighting()
         }
     }
 
     private fun updateTicker() {
-        updateSeconds()
-        val formattedSeconds = getFormattedSeconds()
-        time = "$min:$formattedSeconds"
+        flow<Int> {
+            while (start) {
+                delay(1000)
+                updateSeconds()
+                val formattedSeconds = getFormattedSeconds()
+                timeFlow.emit("$min:$formattedSeconds")
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun getFormattedSeconds(): String {
@@ -56,8 +62,7 @@ class MainViewModel : ViewModel() {
     private fun startHighlighting() {
         flow<Int> {
             while (start) {
-                delay(1000)
-                updateTicker()
+                delay(2000)
                 val position = Random.nextInt(0, 15)
                 positionFlow.emit(position)
             }
@@ -72,7 +77,7 @@ class MainViewModel : ViewModel() {
 
     private fun gameOver() {
         viewModelScope.launch {
-            errorMessage.emit("GAME OVER")
+            errorMessageFlow.emit("GAME OVER")
             startStopHighlighting()
 
         }

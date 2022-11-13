@@ -55,7 +55,7 @@ private fun App() {
             it
             val viewModel: MainViewModel = viewModel()
             val position by viewModel.positionFlow.collectAsState(initial = -1)
-            val errorMessage by viewModel.errorMessage.collectAsState(initial = "")
+            val errorMessage by viewModel.errorMessageFlow.collectAsState(initial = "")
             handleErrorMessage(errorMessage)
 
             Column {
@@ -69,7 +69,7 @@ private fun App() {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val points = viewModel.points
-                    val timer = viewModel.time
+                    val timer by viewModel.timeFlow.collectAsState(initial = "0:00")
                     Text(text = "P: $points", fontSize = 28.sp, fontWeight = FontWeight.Bold)
                     Text(text = timer, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                 }
