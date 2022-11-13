@@ -1,9 +1,11 @@
 package com.salosoft.touchgame
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,9 +55,13 @@ private fun App() {
             it
             val viewModel: MainViewModel = viewModel()
             val position by viewModel.positionFlow.collectAsState(initial = -1)
+            val errorMessage by viewModel.errorMessage.collectAsState(initial = "")
+            handleErrorMessage(errorMessage)
 
             Column {
-                GridField(position)
+                GridField(position) { isHighlight ->
+                    viewModel.onItemClicked(isHighlight)
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -67,7 +74,7 @@ private fun App() {
                     Text(text = timer, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                 }
                 Button(
-                    onClick = { viewModel.getRandomSequence() },
+                    onClick = { viewModel.startStopHighlighting() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(14.dp)
@@ -84,7 +91,13 @@ private fun App() {
 }
 
 @Composable
-private fun GridField(highlightPos: Int) {
+fun handleErrorMessage(errorMessage: String) {
+    if (errorMessage.isNotBlank())
+        Toast.makeText(LocalContext.current, errorMessage, Toast.LENGTH_LONG).show()
+}
+
+@Composable
+private fun GridField(highlightPos: Int, onItemClick: (Boolean) -> Unit) {
     val fieldList: List<Boolean> = Array(16) { it == 12 }.toList()
     val listSize = fieldList.size
     val columSize = sqrt(listSize.toDouble()).toInt()
@@ -95,13 +108,15 @@ private fun GridField(highlightPos: Int) {
         modifier = Modifier.padding(14.dp)
     ) {
         items(listSize) { index ->
-            FieldView(index == highlightPos)
+            FieldView(index == highlightPos) { isHighlight ->
+                onItemClick(isHighlight)
+            }
         }
     }
 }
 
 @Composable
-fun FieldView(isHighlight: Boolean) {
+fun FieldView(isHighlight: Boolean, onItemClick: (Boolean) -> Unit) {
     val size = 50.dp
     val padding = 4.dp
     Box(
@@ -110,6 +125,9 @@ fun FieldView(isHighlight: Boolean) {
             .width(size)
             .background(color = if (isHighlight) Color.Blue else Color.White)
             .padding(padding)
+            .clickable {
+                onItemClick(isHighlight)
+            }
     )
 }
 
