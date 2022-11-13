@@ -6,30 +6,32 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salosoft.touchgame.ui.theme.TouchGameTheme
 import com.salosoft.touchgame.widget.ToolbarWidget
 import kotlin.math.sqrt
-import kotlin.random.Random
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,32 +45,42 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun App() {
     TouchGameTheme {
-        val scope = rememberCoroutineScope()
-        // A surface container using the 'background' color from the theme
         Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxSize(),
             topBar = { ToolbarWidget(title = "") }
         ) {
             it
-            val position by getRandomSequency().collectAsState(initial = 2)
+            val viewModel: MainViewModel = viewModel()
+            val position by viewModel.positionFlow.collectAsState(initial = -1)
 
-            println("Position: $position")
-            GridField(position)
+            Column {
+                GridField(position)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val points = viewModel.points
+                    val timer = viewModel.time
+                    Text(text = "P: $points", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text(text = timer, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = { viewModel.getRandomSequence() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp)
+                ) {
+                    val buttonText = if (viewModel.start) "Stop" else "Start"
+                    Text(
+                        text = buttonText, color = Color.White, modifier = Modifier.padding(8.dp),
+                        fontSize = 18.sp
+                    )
+                }
+            }
         }
     }
-}
-
-fun getRandomSequency(): Flow<Int> {
-    val listOfNumber = Array(2) { it }.toList()
-    return listOfNumber.asFlow()
-        .onEach {
-            delay(1000)
-        }
-        .map {
-            Random.nextInt(0, 15)
-        }
 }
 
 @Composable
@@ -80,7 +92,7 @@ private fun GridField(highlightPos: Int) {
         columns = GridCells.Fixed(columSize),
         verticalArrangement = Arrangement.spacedBy(14.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = Modifier.padding(start = 14.dp, end = 14.dp)
+        modifier = Modifier.padding(14.dp)
     ) {
         items(listSize) { index ->
             FieldView(index == highlightPos)
