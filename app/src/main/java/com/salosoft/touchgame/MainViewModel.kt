@@ -3,8 +3,10 @@ package com.salosoft.touchgame
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
@@ -12,6 +14,8 @@ import kotlinx.coroutines.launch
 class MainViewModel : ViewModel() {
     private var min = 0
     private var seconds = 0
+    private var delay = 1000.0
+    private var rounds = 0
 
     var start = false
     var points = 0
@@ -62,11 +66,29 @@ class MainViewModel : ViewModel() {
     private fun startHighlighting() {
         flow<Int> {
             while (start) {
-                delay(2000)
-                val position = Random.nextInt(0, 15)
-                positionFlow.emit(position)
+                delay(delay.milliseconds)
+                updateRounds()
+                updateDelay()
+                updateHighlight()
             }
         }.launchIn(viewModelScope)
+    }
+
+    private fun updateRounds() {
+        rounds++
+    }
+
+    private fun updateDelay() {
+        if (rounds % 5 == 0 && delay > 200) {
+            delay = delay.times(0.9)
+        }
+    }
+
+    private suspend fun updateHighlight() {
+        val position = Random.nextInt(0, 15)
+        val currentPosition = positionFlow.first()
+        if (position == currentPosition) updateHighlight()
+        positionFlow.emit(position)
     }
 
     fun onItemClicked(isHighlight: Boolean) {
@@ -79,7 +101,6 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             errorMessageFlow.emit("GAME OVER")
             startStopHighlighting()
-
         }
     }
 }
