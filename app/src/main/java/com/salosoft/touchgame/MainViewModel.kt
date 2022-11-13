@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 class MainViewModel : ViewModel() {
     private var min = 0
     private var seconds = 0
-    private var delay = 1000.0
+    private var delay = 3000.0
     private var rounds = 0
 
     var start = false
@@ -30,6 +30,12 @@ class MainViewModel : ViewModel() {
             updateTicker()
             startHighlighting()
         }
+    }
+
+    fun onItemClicked(isHighlight: Boolean) {
+        if (isHighlight) points++ else if (points > 0) points--
+        if (points <= 0)
+            gameOver()
     }
 
     private fun updateTicker() {
@@ -58,8 +64,7 @@ class MainViewModel : ViewModel() {
 
     private fun getFormattedSeconds(): String {
         val secondsString = seconds.toString()
-        val formattedSeconds = if (secondsString.length < 2) "0$secondsString" else secondsString
-        return formattedSeconds
+        return if (secondsString.length < 2) "0$secondsString" else secondsString
     }
 
     private fun updateSeconds() {
@@ -74,7 +79,6 @@ class MainViewModel : ViewModel() {
         if (min < 60) min++
         else min = 0
     }
-
 
     private fun startHighlighting() {
         flow<Int> {
@@ -102,12 +106,6 @@ class MainViewModel : ViewModel() {
         val currentPosition = positionFlow.first()
         if (position == currentPosition) updateHighlight()
         positionFlow.emit(position)
-    }
-
-    fun onItemClicked(isHighlight: Boolean) {
-        if (isHighlight) points++ else if (points > 0) points-- else 0
-        if (points <= 0)
-            gameOver()
     }
 
     private fun gameOver() {

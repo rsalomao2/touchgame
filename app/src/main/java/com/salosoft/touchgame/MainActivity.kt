@@ -23,6 +23,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salosoft.touchgame.ui.theme.TouchGameTheme
+import com.salosoft.touchgame.ui.widget.GridSizeOption
 import com.salosoft.touchgame.widget.ToolbarWidget
 import kotlin.math.sqrt
 
@@ -47,19 +51,32 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun App() {
+    val viewModel: MainViewModel = viewModel()
+    var gridSize by remember { mutableStateOf(4) }
     TouchGameTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            topBar = { ToolbarWidget(title = "") }
+            topBar = {
+                ToolbarWidget(title = "Touch Game") { gridSizeSelected ->
+                    val size = when (gridSizeSelected) {
+                        is GridSizeOption.FourByFour -> 4
+                        is GridSizeOption.SixteenBySixteen -> 16
+                        is GridSizeOption.ThirdSixByThirdSix -> 36
+                        is GridSizeOption.SixtyFourBySixtyFour -> 64
+                    }
+                    gridSize = size
+                }
+            }
         ) {
             it
-            val viewModel: MainViewModel = viewModel()
+
             val position by viewModel.positionFlow.collectAsState(initial = -1)
             val errorMessage by viewModel.errorMessageFlow.collectAsState(initial = "")
+
             handleErrorMessage(errorMessage)
 
             Column {
-                GridField(position) { isHighlight ->
+                GridField(position, gridSize) { isHighlight ->
                     viewModel.onItemClicked(isHighlight)
                 }
                 Row(
@@ -91,14 +108,14 @@ private fun App() {
 }
 
 @Composable
-fun handleErrorMessage(errorMessage: String) {
+private fun handleErrorMessage(errorMessage: String) {
     if (errorMessage.isNotBlank())
         Toast.makeText(LocalContext.current, errorMessage, Toast.LENGTH_LONG).show()
 }
 
 @Composable
-private fun GridField(highlightPos: Int, onItemClick: (Boolean) -> Unit) {
-    val fieldList: List<Boolean> = Array(16) { it == 12 }.toList()
+private fun GridField(highlightPos: Int, gridSize: Int, onItemClick: (Boolean) -> Unit) {
+    val fieldList: List<Boolean> = Array(gridSize) { false }.toList()
     val listSize = fieldList.size
     val columSize = sqrt(listSize.toDouble()).toInt()
     LazyVerticalGrid(
@@ -116,7 +133,7 @@ private fun GridField(highlightPos: Int, onItemClick: (Boolean) -> Unit) {
 }
 
 @Composable
-fun FieldView(isHighlight: Boolean, onItemClick: (Boolean) -> Unit) {
+private fun FieldView(isHighlight: Boolean, onItemClick: (Boolean) -> Unit) {
     val size = 50.dp
     val padding = 4.dp
     Box(
@@ -133,7 +150,7 @@ fun FieldView(isHighlight: Boolean, onItemClick: (Boolean) -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
+private fun DefaultPreview() {
     TouchGameTheme {
         App()
     }
